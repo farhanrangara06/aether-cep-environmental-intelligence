@@ -13,7 +13,17 @@ Live air quality is **Copernicus Atmosphere Monitoring Service (CAMS / ECMWF)** 
 - Alert queue vs US AQI and WHO PM2.5 (15 µg/m³)
 - CEP dossier: problem, objectives, architecture
 
-## Stack
+Live repo: [farhanrangara06/aether-cep-environmental-intelligence](https://github.com/farhanrangara06/aether-cep-environmental-intelligence)
+
+## Deploy on Netlify
+
+The repo already includes `netlify.toml` (build command + SPA redirects).
+
+1. Log in: `npx netlify-cli login`
+2. Ship the production folder: `npx netlify-cli deploy --prod --dir=dist`
+3. Or in the Netlify UI: **Add new site → Import an existing project → GitHub** and pick this repository. Build command `npm run build`, publish directory `dist`.
+
+## Scripts
 
 React 19, TypeScript, Vite, Recharts, Leaflet. Hosted as a static SPA.
 
