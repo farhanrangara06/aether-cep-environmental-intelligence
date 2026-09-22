@@ -20,7 +20,7 @@ export function MapView() {
     <div className="grid grid-2">
       <div className="card span-2" style={{ gridColumn: '1 / -1' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
-          <h3 style={{ margin: 0 }}>Live US AQI · Carto dark basemap</h3>
+          <h3 style={{ margin: 0 }}>Live US AQI · world observation grid</h3>
           <input className="search" placeholder="Search city, country, region" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
         <div className="leaflet-map">
