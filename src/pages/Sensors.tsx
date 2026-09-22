@@ -39,7 +39,7 @@ export function Sensors() {
       <div className="card">
         <h3>Campus mesh fused to {hub?.city.name ?? 'hub'} CAMS nowcast</h3>
         <p style={{ color: 'var(--muted)' }}>
-          Hardware layer for the CEP: low-cost optical particle counters, metal-oxide gas sensors, and
+          Hardware layer: low-cost optical particle counters, metal-oxide gas sensors, and
           climate probes. Readings are anchored to the live Open-Meteo/CAMS field for the nearest hub
           city so the mesh stays physically plausible, then locally offset the way a real calibration
           layer would.
@@ -85,7 +85,7 @@ export function Sensors() {
         {[
           ['Ingest', 'MQTT → time-series store → feature store. This demo uses HTTPS CAMS as the planetary bus.'],
           ['QA / QC', 'Range checks, stuck-sensor detection, and hub-city residual vs CAMS.'],
-          ['Actuation', 'Alerts fire when US AQI > 100 or PM2.5 exceeds the WHO 24h guideline.'],
+          ['Actuation', 'Alerts fire when AQI > 100 or PM2.5 exceeds the WHO 24h guideline.'],
         ].map(([t, d]) => (
           <div className="card" key={t}>
             <h3>{t}</h3>

@@ -18,7 +18,7 @@ export function Landing() {
       </nav>
 
       <section className="hero">
-        <span className="pill">CEP 43 · Sensors & data analytics · Live Copernicus CAMS</span>
+        <span className="pill">Live Copernicus CAMS · NOAA CO₂ · IoT mesh</span>
         <h1>See the planet breathe. Act before the air turns.</h1>
         <p>
           Aether is a SaaS-style environmental operations platform. It fuses a campus IoT mesh with
@@ -30,7 +30,7 @@ export function Landing() {
             Launch live dashboard
           </Link>
           <Link className="btn" to="/app/reports">
-            Read the CEP dossier
+            How Aether works
           </Link>
         </div>
         <div className="hero-stats">

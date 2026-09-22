@@ -1,10 +1,13 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { CITIES } from '../data/cities'
 import { loadWorldGrid, type CitySnapshot } from '../lib/api'
 import { mean } from '../lib/format'
 
+const REFRESH_MS = 90_000
+
 type DataState = {
   loading: boolean
+  refreshing: boolean
   error: string | null
   snapshots: CitySnapshot[]
   refreshedAt: string | null
@@ -15,43 +18,56 @@ const Ctx = createContext<DataState | null>(null)
 
 export function DataProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [snapshots, setSnapshots] = useState<CitySnapshot[]>([])
   const [refreshedAt, setRefreshedAt] = useState<string | null>(null)
   const [tick, setTick] = useState(0)
+  const hasData = useRef(false)
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
+    const first = !hasData.current
+    if (first) setLoading(true)
+    else setRefreshing(true)
     setError(null)
     loadWorldGrid()
       .then((rows) => {
         if (cancelled) return
+        hasData.current = true
         setSnapshots(rows)
         setRefreshedAt(new Date().toISOString())
       })
       .catch((err: unknown) => {
         if (cancelled) return
         setError(err instanceof Error ? err.message : 'Failed to load live environmental feeds')
-        setSnapshots(CITIES.map((city) => ({ city, air: null, weather: null, hourly: null })))
+        if (first) setSnapshots(CITIES.map((city) => ({ city, air: null, weather: null, hourly: null })))
       })
       .finally(() => {
-        if (!cancelled) setLoading(false)
+        if (cancelled) return
+        setLoading(false)
+        setRefreshing(false)
       })
     return () => {
       cancelled = true
     }
   }, [tick])
 
+  useEffect(() => {
+    const id = window.setInterval(() => setTick((n) => n + 1), REFRESH_MS)
+    return () => window.clearInterval(id)
+  }, [])
+
   const value = useMemo(
     () => ({
       loading,
+      refreshing,
       error,
       snapshots,
       refreshedAt,
       refresh: () => setTick((n) => n + 1),
     }),
-    [loading, error, snapshots, refreshedAt],
+    [loading, refreshing, error, snapshots, refreshedAt],
   )
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

@@ -18,7 +18,7 @@ const links = [
   { to: '/app/analytics', label: 'Analytics', icon: Activity },
   { to: '/app/sensors', label: 'Sensor mesh', icon: Radio },
   { to: '/app/alerts', label: 'Alerts', icon: Bell },
-  { to: '/app/reports', label: 'CEP dossier', icon: ScrollText },
+  { to: '/app/reports', label: 'Platform', icon: ScrollText },
 ]
 
 const titles: Record<string, { t: string; d: string }> = {
@@ -26,12 +26,12 @@ const titles: Record<string, { t: string; d: string }> = {
   '/app/map': { t: 'Global observation grid', d: 'Copernicus CAMS fields sampled at 51 world cities.' },
   '/app/analytics': { t: 'Environmental analytics', d: 'Hourly pollutants, city comparison, and trend intelligence.' },
   '/app/sensors': { t: 'IoT sensor mesh', d: 'Campus nodes fused with the global monitoring backbone.' },
-  '/app/alerts': { t: 'Risk & alerts', d: 'Threshold breaches generated from live US AQI and PM2.5.' },
-  '/app/reports': { t: 'College CEP dossier', d: 'Problem, architecture, methodology, and academic deliverables.' },
+  '/app/alerts': { t: 'Risk & alerts', d: 'Threshold breaches generated from live AQI and PM2.5.' },
+  '/app/reports': { t: 'Platform', d: 'Architecture, data sources, and how the operations stack is built.' },
 }
 
 export function AppLayout() {
-  const { refreshedAt, loading, refresh, error } = useData()
+  const { refreshedAt, loading, refreshing, refresh, error } = useData()
   const loc = useLocation()
   const meta = titles[loc.pathname] ?? titles['/app']
 
@@ -54,9 +54,9 @@ export function AppLayout() {
           </NavLink>
         ))}
         <div className="sidebar-foot">
-          Workspace · CEP 43
+          Workspace · Production
           <div className="mono" style={{ marginTop: 6, color: 'var(--mint-2)' }}>
-            Environmental Monitoring
+            Aether Control
           </div>
         </div>
       </aside>
@@ -69,7 +69,7 @@ export function AppLayout() {
           <div className="top-actions">
             <span className="pill">
               <span className="pulse" />
-              {loading ? 'Syncing CAMS' : error ? 'Degraded' : 'Live feeds'}
+              {loading ? 'Syncing CAMS' : refreshing ? 'Refreshing' : error ? 'Degraded' : 'Live · auto 90s'}
             </span>
             <span className="pill mono">{timeAgo(refreshedAt ?? undefined)}</span>
             <button className="btn" onClick={refresh} type="button">

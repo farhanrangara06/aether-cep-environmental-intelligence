@@ -1,7 +1,7 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useData, useKpis } from '../context/DataContext'
 import { aqiColor, usAqiBand } from '../lib/aqi'
-import { fmt, fmtInt } from '../lib/format'
+import { fmt, fmtInt, observedAt } from '../lib/format'
 import { CO2_CURRENT, CO2_MONTHLY, GLOBAL_TEMP } from '../data/climate'
 import {
   Area,
@@ -14,10 +14,15 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import type { CitySnapshot } from '../lib/api'
+
+type SortKey = 'name' | 'aqi' | 'pm25' | 'no2' | 'temp' | 'time'
 
 export function Overview() {
   const { snapshots, loading } = useData()
   const k = useKpis(snapshots)
+  const [q, setQ] = useState('')
+  const [sort, setSort] = useState<SortKey>('aqi')
   const region = useMemo(() => {
     const map = new Map<string, number[]>()
     snapshots.forEach((s) => {
@@ -31,6 +36,27 @@ export function Overview() {
       aqi: vals.reduce((a, b) => a + b, 0) / vals.length,
     }))
   }, [snapshots])
+
+  const liveRows = useMemo(() => {
+    const s = q.trim().toLowerCase()
+    const rows = snapshots.filter(
+      (row) => !s || `${row.city.name} ${row.city.country} ${row.city.region}`.toLowerCase().includes(s),
+    )
+    const val = (row: CitySnapshot) => {
+      if (sort === 'name') return row.city.name
+      if (sort === 'aqi') return row.air?.us_aqi ?? -1
+      if (sort === 'pm25') return row.air?.pm2_5 ?? -1
+      if (sort === 'no2') return row.air?.nitrogen_dioxide ?? -1
+      if (sort === 'temp') return row.weather?.temperature_2m ?? -999
+      return row.air?.time ?? ''
+    }
+    return [...rows].sort((a, b) => {
+      const va = val(a)
+      const vb = val(b)
+      if (typeof va === 'string' && typeof vb === 'string') return va.localeCompare(vb)
+      return (vb as number) - (va as number)
+    })
+  }, [q, sort, snapshots])
 
   if (loading && !snapshots.some((s) => s.air)) {
     return (
@@ -46,9 +72,9 @@ export function Overview() {
     <>
       <div className="grid grid-4">
         <div className="card kpi">
-          <div className="label">Grid-mean US AQI</div>
+          <div className="label">Grid-mean AQI</div>
           <div className="value">{fmtInt(k.avgAqi)}</div>
-          <div className="hint">{k.coverage} live cities · CAMS / Open-Meteo</div>
+          <div className="hint">{k.coverage}/{snapshots.length} cities live · CAMS nowcast</div>
         </div>
         <div className="card kpi">
           <div className="label">Mean PM2.5</div>
@@ -58,12 +84,73 @@ export function Overview() {
         <div className="card kpi">
           <div className="label">Cities unhealthy+</div>
           <div className="value" style={{ color: k.unhealthy ? 'var(--warn)' : 'var(--mint)' }}>{k.unhealthy}</div>
-          <div className="hint">US AQI greater than 100</div>
+          <div className="hint">AQI greater than 100</div>
         </div>
         <div className="card kpi">
           <div className="label">Mauna Loa CO₂</div>
           <div className="value">{fmt(CO2_CURRENT.ppm, 2)}</div>
           <div className="hint">{CO2_CURRENT.asOf} · NOAA GML daily</div>
+        </div>
+      </div>
+
+      <div className="card">
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
+          <h3 style={{ margin: 0 }}>Live feed · every city</h3>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <input className="search" placeholder="Filter cities" value={q} onChange={(e) => setQ(e.target.value)} />
+            <select className="search" value={sort} onChange={(e) => setSort(e.target.value as SortKey)}>
+              <option value="aqi">Sort by AQI</option>
+              <option value="pm25">Sort by PM2.5</option>
+              <option value="no2">Sort by NO₂</option>
+              <option value="temp">Sort by temp</option>
+              <option value="name">Sort by name</option>
+              <option value="time">Sort by observation time</option>
+            </select>
+          </div>
+        </div>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>City</th>
+                <th>Region</th>
+                <th>AQI</th>
+                <th>PM2.5</th>
+                <th>PM10</th>
+                <th>O₃</th>
+                <th>NO₂</th>
+                <th>Temp</th>
+                <th>Observed</th>
+                <th>Band</th>
+              </tr>
+            </thead>
+            <tbody>
+              {liveRows.map((s) => {
+                const band = usAqiBand(s.air?.us_aqi ?? 0)
+                return (
+                  <tr key={s.city.id}>
+                    <td>
+                      {s.city.name}
+                      <div className="mono" style={{ color: 'var(--muted)', fontSize: 11 }}>{s.city.country}</div>
+                    </td>
+                    <td>{s.city.region}</td>
+                    <td className="mono" style={{ color: aqiColor(s.air?.us_aqi ?? 0) }}>{fmtInt(s.air?.us_aqi ?? Number.NaN)}</td>
+                    <td className="mono">{fmt(s.air?.pm2_5 ?? Number.NaN)}</td>
+                    <td className="mono">{fmt(s.air?.pm10 ?? Number.NaN)}</td>
+                    <td className="mono">{fmt(s.air?.ozone ?? Number.NaN)}</td>
+                    <td className="mono">{fmt(s.air?.nitrogen_dioxide ?? Number.NaN)}</td>
+                    <td className="mono">{fmt(s.weather?.temperature_2m ?? Number.NaN)}°</td>
+                    <td className="mono" style={{ color: 'var(--muted)' }}>{observedAt(s.air?.time ?? s.weather?.time)}</td>
+                    <td>
+                      <span className="badge" style={{ background: s.air ? band.color : '#44554c' }}>
+                        {s.air ? band.label : 'syncing'}
+                      </span>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -75,7 +162,7 @@ export function Overview() {
               <thead>
                 <tr>
                   <th>City</th>
-                  <th>US AQI</th>
+                  <th>AQI</th>
                   <th>PM2.5</th>
                   <th>NO₂</th>
                   <th>Band</th>
@@ -110,7 +197,7 @@ export function Overview() {
               <thead>
                 <tr>
                   <th>City</th>
-                  <th>US AQI</th>
+                  <th>AQI</th>
                   <th>PM2.5</th>
                 </tr>
               </thead>
@@ -130,7 +217,7 @@ export function Overview() {
 
       <div className="grid grid-2">
         <div className="card">
-          <h3>Regional mean US AQI</h3>
+          <h3>Regional mean AQI</h3>
           <div style={{ height: 260 }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={region}>

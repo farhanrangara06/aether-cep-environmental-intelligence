@@ -85,7 +85,7 @@ export function Analytics() {
           </div>
         </div>
         <div className="card">
-          <h3>US AQI compare · next 24h</h3>
+          <h3>AQI compare · next 24h</h3>
           <div style={{ height: 300 }}>
             <ResponsiveContainer>
               <LineChart data={compare}>

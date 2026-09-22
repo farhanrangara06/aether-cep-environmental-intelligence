@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { CircleMarker, MapContainer, Popup, TileLayer } from 'react-leaflet'
 import { useData } from '../context/DataContext'
 import { aqiColor, usAqiBand } from '../lib/aqi'
-import { fmt, fmtInt } from '../lib/format'
+import { fmt, fmtInt, observedAt } from '../lib/format'
 
 export function MapView() {
   const { snapshots } = useData()
@@ -20,7 +20,7 @@ export function MapView() {
     <div className="grid grid-2">
       <div className="card span-2" style={{ gridColumn: '1 / -1' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
-          <h3 style={{ margin: 0 }}>Live US AQI · world observation grid</h3>
+          <h3 style={{ margin: 0 }}>Live AQI · world observation grid</h3>
           <input className="search" placeholder="Search city, country, region" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
         <div className="leaflet-map">
@@ -42,7 +42,8 @@ export function MapView() {
                   <Popup>
                     <strong>{row.city.name}</strong>
                     <div>{row.city.country}</div>
-                    <div>US AQI {fmtInt(row.air?.us_aqi ?? Number.NaN)} · PM2.5 {fmt(row.air?.pm2_5 ?? Number.NaN)}</div>
+                    <div>AQI {fmtInt(row.air?.us_aqi ?? Number.NaN)} · PM2.5 {fmt(row.air?.pm2_5 ?? Number.NaN)}</div>
+                    <div>{observedAt(row.air?.time)}</div>
                   </Popup>
                 </CircleMarker>
               )
@@ -63,7 +64,7 @@ export function MapView() {
           <h3>{active.city.name} inspector</h3>
           <div className="grid grid-4">
             {[
-              ['US AQI', fmtInt(active.air?.us_aqi ?? Number.NaN)],
+              ['AQI', fmtInt(active.air?.us_aqi ?? Number.NaN)],
               ['PM2.5', `${fmt(active.air?.pm2_5 ?? Number.NaN)} µg/m³`],
               ['PM10', `${fmt(active.air?.pm10 ?? Number.NaN)} µg/m³`],
               ['Ozone', `${fmt(active.air?.ozone ?? Number.NaN)} µg/m³`],
@@ -78,7 +79,11 @@ export function MapView() {
               </div>
             ))}
           </div>
-          {active.air && <p style={{ color: 'var(--muted)' }}>{usAqiBand(active.air.us_aqi).advice}</p>}
+          {active.air && (
+            <p style={{ color: 'var(--muted)' }}>
+              Observed {observedAt(active.air.time)}. {usAqiBand(active.air.us_aqi).advice}
+            </p>
+          )}
         </div>
       )}
     </div>

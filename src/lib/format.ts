@@ -19,6 +19,18 @@ export function timeAgo(iso?: string) {
   return new Date(iso).toLocaleString()
 }
 
+export function observedAt(iso?: string) {
+  if (!iso) return 'pending'
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  return d.toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 export function mean(values: number[]) {
   const v = values.filter((x) => Number.isFinite(x))
   if (!v.length) return Number.NaN

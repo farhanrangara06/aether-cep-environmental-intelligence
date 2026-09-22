@@ -18,8 +18,8 @@ export function Alerts() {
           id: s.city.id,
           title: `${s.city.name} · ${band.label}`,
           body: who
-            ? `PM2.5 ${fmt(s.air?.pm2_5 ?? Number.NaN)} µg/m³ exceeds WHO 24h guideline (15). US AQI ${fmtInt(aqi)}.`
-            : `US AQI ${fmtInt(aqi)} (${band.range}). ${band.advice}`,
+            ? `PM2.5 ${fmt(s.air?.pm2_5 ?? Number.NaN)} µg/m³ exceeds WHO 24h guideline (15). AQI ${fmtInt(aqi)}.`
+            : `AQI ${fmtInt(aqi)} (${band.range}). ${band.advice}`,
           color: band.color,
           sev: aqi >= 150 ? 'P1' : aqi >= 100 ? 'P2' : 'P3',
         }
@@ -37,7 +37,7 @@ export function Alerts() {
         <div className="card kpi">
           <div className="label">P1 / very unhealthy+</div>
           <div className="value">{items.filter((i) => i.sev === 'P1').length}</div>
-          <div className="hint">US AQI ≥ 150</div>
+          <div className="hint">AQI ≥ 150</div>
         </div>
         <div className="card kpi">
           <div className="label">WHO PM2.5 breaches</div>
